@@ -5,11 +5,11 @@ This repository contains the source for the [Rundeck](http://rundeck.org/) [dock
 
 # Image details
 
-1. Based on debian:jessie
+1. Based on debian:stretch
 1. Supervisor, Apache2, and rundeck
 1. No SSH.  Use docker exec or [nsenter](https://github.com/jpetazzo/nsenter)
 1. If RUNDECK_PASSWORD is not supplied, it will be randomly generated and shown via stdout.
-1. Supply the SERVER_URL or else you won't get too far :)
+1. Supply the SERVER_URL or it will default to https://0.0.0.0:4443
 1. As always, update passwords for pre-installed accounts
 1. I sometimes get connection reset by peer errors when building the Docker image from the Rundeck download URL.  Trying again usually works.
 
@@ -28,7 +28,7 @@ sudo docker run -p 4440:4440 -e SERVER_URL=http://MY.HOSTNAME.COM:4440 --name ru
 ```
 
 # SSL
-Start a new container, bind to host's port 4443, and enable SSL.   Note: Make sure to update /etc/rundeck/ssl/keystore and /etc/rundeck/ssl/truststore for Production systems as the default certificate is self-signed.
+Start a new container, bind to host's port 4443, and enable SSL.   Note: Make sure to update /etc/rundeck/ssl/keystore and /etc/rundeck/ssl/truststore for Production systems as the default certificate is self-signed. Set KEYSTORE_PASS & TRUSTSTORE_PASS to the passwords of those files. Both files can be volume mounted.
 ```
 sudo docker run -p 4443:4443 -e SERVER_URL=https://MY.HOSTNAME.COM:4443 -e RUNDECK_WITH_SSL=true --name rundeck -t jordan/rundeck:latest
 ```
@@ -43,7 +43,7 @@ SERVER_URL - Full URL in the form http://MY.HOSTNAME.COM:4440, http//123.456.789
 
 EXTERNAL_SERVER_URL - Use this if you are running rundeck behind a proxy.  This is useful if you run rundeck through some kind of external network gateway/load balancer.  Note that utilities like rd-jobs and rd-projects will no longer work and you will need to use the newer [rd](https://github.com/rundeck/rundeck-cli) command line utility.
 
-RDECK_JVM - Additional parameters sent to the rundeck JVM (ex: -Dserver.web.context=/rundeck)
+RDECK_JVM_SETTINGS - Additional parameters sent to the rundeck JVM (ex: -Xmx1024m -Xms256m -XX:MaxMetaspaceSize=256m -server -Dfile.encoding=UTF-8 -Dserver.web.context=/rundeck)
 
 DATABASE_URL - For use with (container) external database
 
@@ -64,6 +64,10 @@ RUNDECK_PROJECT_STORAGE_TYPE - Options file (default) or db.  See: http://rundec
 DEBIAN_SYS_MAINT_PASSWORD
 
 NO_LOCAL_MYSQL - false (default).  Set to true if using an external MySQL container or instance.  Make sure to set DATABASE_URL and RUNDECK_PASSWORD (used for JDBC connection to MySQL).  Further details for setting up MYSQL: http://rundeck.org/docs/administration/setting-up-an-rdb-datasource.html
+
+LOGIN_MODULE - RDpropertyfilelogin(default) or ldap. See: http://rundeck.org/docs/administration/authenticating-users.html
+
+JAAS_CONF_FILE - ldap configuration file name if ldap. You will need to mount the same file at /etc/rundeck/<filename of ldap>. See: http://rundeck.org/docs/administration/authenticating-users.html
 ```
 
 # Volumes

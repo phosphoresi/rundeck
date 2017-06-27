@@ -1,25 +1,29 @@
 # Dockerfile for rundeck
 # https://github.com/jjethwa/rundeck
 
-FROM debian:jessie
+FROM debian:stretch
 
 MAINTAINER Jordan Jethwa
 
-ENV DEBIAN_FRONTEND noninteractive \
-    SERVER_URL https://localhost:4443 \
-    RUNDECK_STORAGE_PROVIDER file \
-    RUNDECK_PROJECT_STORAGE_TYPE file \
-    NO_LOCAL_MYSQL false
+ENV SERVER_URL=https://localhost:4443 \
+    RUNDECK_STORAGE_PROVIDER=file \
+    RUNDECK_PROJECT_STORAGE_TYPE=file \
+    NO_LOCAL_MYSQL=false \
+    LOGIN_MODULE=RDpropertyfilelogin \
+    JAAS_CONF_FILE=jaas-loginmodule.conf \
+    KEYSTORE_PASS=adminadmin \
+    TRUSTSTORE_PASS=adminadmin
 
-RUN echo "deb http://ftp.debian.org/debian jessie-backports main" >> /etc/apt/sources.list && \
+RUN export DEBIAN_FRONTEND=noninteractive \
+    echo "deb http://ftp.debian.org/debian stretch-backports main" >> /etc/apt/sources.list && \
     apt-get -qq update && \
-    apt-get -qqy install --no-install-recommends bash openjdk-8-jre-headless supervisor procps sudo ca-certificates openssh-client mysql-server mysql-client pwgen curl git && \
+    apt-get -qqy install -t stretch-backports --no-install-recommends bash openjdk-8-jre-headless ca-certificates-java supervisor procps sudo ca-certificates openssh-client mysql-server mysql-client pwgen curl git uuid-runtime parallel && \
     cd /tmp/ && \
-    curl -Lo /tmp/rundeck.deb http://dl.bintray.com/rundeck/rundeck-deb/rundeck-2.7.1-1-GA.deb && \
-    echo '57986749f7496cf201cb89ebd44fe0859d86062f0783d9e653344d4894ba0559  rundeck.deb' > /tmp/rundeck.sig && \
+    curl -Lo /tmp/rundeck.deb http://dl.bintray.com/rundeck/rundeck-deb/rundeck-2.8.2-1-GA.deb && \
+    echo '739ee8230a5da973c95a540391d021bc48f2cf77a17f68b7310ca4ff7aac9b17  rundeck.deb' > /tmp/rundeck.sig && \
     shasum -a256 -c /tmp/rundeck.sig && \
-    curl -Lo /tmp/rundeck-cli.deb https://github.com/rundeck/rundeck-cli/releases/download/v1.0.0-alpha/rundeck-cli_1.0.0.SNAPSHOT-1_all.deb && \
-    echo '890ae85e0acdf703fa336bfc73a7129ce618794833d5744ddae901a1b2e38074  rundeck-cli.deb' > /tmp/rundeck-cli.sig && \
+    curl -Lo /tmp/rundeck-cli.deb https://github.com/rundeck/rundeck-cli/releases/download/v1.0.14/rundeck-cli_1.0.14-1_all.deb && \
+    echo 'ff88227ce7d50b0d80bce74ede5c45cf74ddfcb1890f656f8b106f4e3a22c830  rundeck-cli.deb' > /tmp/rundeck-cli.sig && \
     shasum -a256 -c /tmp/rundeck-cli.sig && \
     cd - && \
     dpkg -i /tmp/rundeck*.deb && rm /tmp/rundeck*.deb && \
