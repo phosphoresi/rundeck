@@ -45,6 +45,8 @@ if [ ! -f "${initfile}" ]; then
    fi
    DATABASE_URL=${DATABASE_URL:-"jdbc:mysql://localhost/rundeckdb?autoReconnect=true"}
    RUNDECK_PASSWORD=${RUNDECK_PASSWORD:-$(pwgen -s 15 1)}
+   DATABASE_ADMIN_PASSWORD=${DATABASE_ADMIN_PASSWORD:-${RUNDECK_PASSWORD}}
+   DATABASE_ADMIN_USER=${DATABASE_ADMIN_USER:-rundeck}
    DEBIAN_SYS_MAINT_PASSWORD=${DEBIAN_SYS_MAINT_PASSWORD:-$(pwgen -s 15 1)}
    RUNDECK_STORAGE_PROVIDER=${RUNDECK_STORAGE_PROVIDER:-"file"}
    RUNDECK_PROJECT_STORAGE_TYPE=${RUNDECK_PROJECT_STORAGE_TYPE:-"file"}
@@ -121,10 +123,10 @@ if [ ! -f "${initfile}" ]; then
         echo "=>Initializing remote MySQL setup"
         (
          echo "CREATE DATABASE IF NOT EXISTS rundeckdb;"
-         echo "GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE, CREATE VIEW, ALTER, INDEX, EXECUTE ON rundeckdb.* TO 'rundeck'@'localhost' IDENTIFIED BY '${RUNDECK_PASSWORD}';"
+         echo "GRANT SELECT, INSERT, UPDATE, DELETE, DROP, CREATE, CREATE VIEW, ALTER, INDEX, EXECUTE ON rundeckdb.* TO 'rundeck'@'%' IDENTIFIED BY '${RUNDECK_PASSWORD}';"
          echo "quit"
          ) |
-         mysql --host=$(echo ${DATABASE_URL} | grep -oP "(?<=jdbc:mysql:\/\/)(.*)(?=\/)") --user=rundeck --password=${RUNDECK_PASSWORD}
+         mysql --host=$(echo ${DATABASE_URL} | grep -oP "(?<=jdbc:mysql:\/\/)(.*)(?=\/)") --user=${DATABASE_ADMIN_USER} --password=${DATABASE_ADMIN_PASSWORD}
       else
         echo "=>Remote database is not MySQL. Skipping remote setup"
       fi
@@ -143,7 +145,16 @@ if [ ! -f "${initfile}" ]; then
    else
       echo "dataSource.password = ${RUNDECK_PASSWORD}" >> /etc/rundeck/rundeck-config.properties
    fi
-
+   
+   # Check if we need to set the rundeck.gui.brand.html property
+   if [ -n "${GUI_BRAND_HTML}" ]; then
+      if grep -q rundeck.gui.brand.html /etc/rundeck/rundeck-config.properties ; then
+        sed -i 's/rundeck\.gui\.brand\.html.*$/rundeck\.gui\.brand\.html = '${GUI_BRAND_HTML}'/g' /etc/rundeck/rundeck-config.properties
+      else
+        echo "rundeck.gui.brand.html = ${GUI_BRAND_HTML}" >> /etc/rundeck/rundeck-config.properties
+      fi
+   fi
+   
    # framework.properties
    sed -i 's,framework.server.name\ \=.*,framework.server.name\ \=\ '${SERVER_HOSTNAME}',g' /etc/rundeck/framework.properties
    sed -i 's,framework.server.hostname\ \=.*,framework.server.hostname\ \=\ '${SERVER_HOSTNAME}',g' /etc/rundeck/framework.properties
