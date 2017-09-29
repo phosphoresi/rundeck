@@ -16,6 +16,8 @@ ENV SERVER_URL=https://localhost:4443 \
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     echo "deb http://ftp.debian.org/debian stretch-backports main" >> /etc/apt/sources.list && \
+    apt-get -qq update && \
+    apt-get -qqy install gnupg && \
     echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list && \
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367 && \
     apt-get -qq update && \
