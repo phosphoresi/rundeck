@@ -7,6 +7,6 @@ RUN apt-get -qq update && \
     apt-get install -qqy python-websocket python-requests python-dateutil python-pip && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN pip install kubernetes
+RUN pip install urllib3==1.23 kubernetes
 
 
