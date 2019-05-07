@@ -1,7 +1,7 @@
 # Dockerfile for rundeck
 # https://github.com/jjethwa/rundeck
 
-FROM jordan/rundeck:3.0.20
+FROM jordan/rundeck:3.0.21
 
 RUN apt-get -qq update && \
     apt-get install -qqy python-websocket python-requests python-dateutil python-pip && \
